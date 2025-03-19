@@ -1,20 +1,2 @@
 
-{
-    "version": 2,
-    "builds": [
-        {
-            "src": "./index.js",
-            "use": "@vercel/node"
-        }
-    ],
-    "routes": [
-        {
-            "src": "/(.*)",
-            "dest": "./index.js",
-            "methods":["GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"],
-            "headers":{ 
-                "Access-Control-Allow-Origin": "*" 
-            }  
-        }
-    ]
- }
+{ "version": 2, "builds": [ { "src": "index.js", "use": "@vercel/node" } ], "routes": [ { "src": "/(.*)", "dest": "index.js", "methods": [ "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS" ] } ] }

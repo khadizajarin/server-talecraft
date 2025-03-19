@@ -1,37 +1,37 @@
 require("dotenv").config();
 const express = require("express");
-const mongoose = require("mongoose");
+const { MongoClient } = require("mongodb");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const morgan = require("morgan");
-const User = require("./models/User"); 
 
 const app = express();
 
 // Middleware
-
-const corsOptions = {
-    origin: ["http://localhost:3000", "https://emaserver.vercel.app/api/v1"],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allowed HTTP methods
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "Access-Control-Allow-Origin-Headers",
-    ],
-  };
-  
-  const middleware = [cors(corsOptions), morgan("dev"), express.json()];
-
-  module.exports = middleware;
-
+app.use(cors());
 app.use(express.json());
+app.use(morgan("dev")); // Logging middleware
 
-// Database Connection
-mongoose.connect(process.env.NEXT_PUBLIC_MONGO_URI)
-    .then(() => console.log("MongoDB Connected"))
-    .catch(err => console.log(err));
+// 🔹 Global DB Variable (Initialized Later)
+let db;
 
-// Sample Route
+// ✅ Connect to MongoDB Once
+async function connectDB() {
+    try {
+        const client = new MongoClient(process.env.NEXT_PUBLIC_MONGO_URI);
+        //await client.connect();
+        db = client.db("talecraft"); // Assign DB globally
+        console.log("✅ MongoDB Connected Successfully");
+    } catch (error) {
+        console.error("❌ MongoDB Connection Error:", error);
+        //process.exit(1);
+    }
+}
+
+// 📌 Call connectDB() when the server starts
+connectDB();
+
+// ✅ Sample Route (Basic)
 app.get("/", (req, res) => {
     res.send("API is running...");
 });
@@ -39,49 +39,41 @@ app.get("/", (req, res) => {
 // ✅ User Signup Route
 app.post("/users", async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        if (!db) return res.status(500).json({ message: "Database not connected!" });
 
-        // Check if user already exists
-        const existingUser = await User.findOne({ email });
+        const { name, email, password } = req.body;
+        const usersCollection = db.collection("users");
+
+        // Check if user exists
+        const existingUser = await usersCollection.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: "User already exists!" });
         }
 
-        // Hash the password
+        // Hash password and create user
         const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = { name, email, password: hashedPassword, profilePicture: "", dob: "", hobbies: [] };
 
-        // Create a new user with empty fields for later updates
-        const newUser = new User({
-            name,
-            email,
-            password: hashedPassword,
-            profilePicture: "", 
-            dob: "", 
-            hobbies: [] 
-        });
-
-        // Save user to DB
-        await newUser.save();
-
+        await usersCollection.insertOne(newUser);
         res.status(201).json({ message: "User registered successfully", user: { name, email } });
     } catch (error) {
-        console.error("Signup Error:", error);
+        console.error("❌ Signup Error:", error);
         res.status(500).json({ message: "Server error", error });
     }
 });
 
-
 // ✅ GET User Data by Email
 app.get("/users", async (req, res) => {
     try {
-        const { email } = req.query; // Get email from query params
+        if (!db) return res.status(500).json({ message: "Database not connected!" });
 
+        const { email } = req.query;
         if (!email) {
             return res.status(400).json({ message: "Email is required!" });
         }
 
-        // Find user by email
-        const user = await User.findOne({ email }).select("-password"); // Exclude password
+        const usersCollection = db.collection("users");
+        const user = await usersCollection.findOne({ email }, { projection: { password: 0 } });
 
         if (!user) {
             return res.status(404).json({ message: "User not found!" });
@@ -89,12 +81,11 @@ app.get("/users", async (req, res) => {
 
         res.status(200).json(user);
     } catch (error) {
-        console.error("Error fetching user:", error);
+        console.error("❌ Fetch User Error:", error);
         res.status(500).json({ message: "Server error", error });
     }
 });
 
-
 // Start Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
