@@ -9,10 +9,23 @@ const app = express();
 
 // Middleware
 app.use(cors());
+// Middleware
+
+const allowedOrigins = [
+    "http://localhost:3000",  // ✅ Allow local frontend // ✅ Allow deployed frontend
+  ];
+  
+  app.use(
+    cors({
+      origin: allowedOrigins,
+      methods: ["GET", "POST", "PUT", "DELETE"],
+      credentials: true,
+    })
+  );
 app.use(express.json());
 
 // Database Connection
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.NEXT_PUBLIC_MONGO_URI)
     .then(() => console.log("MongoDB Connected"))
     .catch(err => console.log(err));
 
