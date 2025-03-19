@@ -9,15 +9,15 @@ const app = express();
 
 // Middleware
 
-
-  const corsOptions ={
-    origin:'http://localhost:3000', 
-    credentials:true,            //access-control-allow-credentials:true
-    optionSuccessStatus:200
-}
-app.use(cors(corsOptions));
-
-app.options('*', cors());
+const corsOptions = {
+    origin: [
+      "http://localhost:3000",
+    ],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  };
+  app.use(cors(corsOptions))
 app.use(express.json());
 
 // Database Connection
