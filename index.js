@@ -8,20 +8,16 @@ const User = require("./models/User");
 const app = express();
 
 // Middleware
-app.use(cors());
-// Middleware
 
-const allowedOrigins = [
-    "http://localhost:3000",  // ✅ Allow local frontend // ✅ Allow deployed frontend
-  ];
-  
-  app.use(
-    cors({
-      origin: allowedOrigins,
-      methods: ["GET", "POST", "PUT", "DELETE"],
-      credentials: true,
-    })
-  );
+
+  const corsOptions ={
+    origin:'http://localhost:3000', 
+    credentials:true,            //access-control-allow-credentials:true
+    optionSuccessStatus:200
+}
+app.use(cors(corsOptions));
+
+
 app.use(express.json());
 
 // Database Connection
