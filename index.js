@@ -3,6 +3,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
+const morgan = require("morgan");
 const User = require("./models/User"); 
 
 const app = express();
@@ -10,14 +11,19 @@ const app = express();
 // Middleware
 
 const corsOptions = {
-    origin: [
-      "http://localhost:3000",
+    origin: ["http://localhost:3000", "https://emaserver.vercel.app/api/v1"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allowed HTTP methods
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "Access-Control-Allow-Origin-Headers",
     ],
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
   };
-  app.use(cors(corsOptions))
+  
+  const middleware = [cors(corsOptions), morgan("dev"), express.json()];
+
+  module.exports = middleware;
+
 app.use(express.json());
 
 // Database Connection
